@@ -19,10 +19,3 @@ spec:
         image: simran.azurecr.io/nodeconsoleapp1:latest
         ports:
         - containerPort: 3000
-        resources:
-          limits:
-            cpu: "0.5"
-            memory: "512Mi"
-          requests:
-            cpu: "0.2"
-            memory: "256Mi"
