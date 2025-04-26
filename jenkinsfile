@@ -5,7 +5,7 @@ pipeline {
         ACR_LOGIN_SERVER = 'simran.azurecr.io'
         IMAGE_NAME = 'nodeconsoleapp1'
         CREDENTIALS_ID = 'jenkins-pipeline-sp'
-        KUBECONFIG_CREDENTIAL_ID = 'kubeconfig' // Make sure to create this credential in Jenkins
+        KUBECONFIG_CREDENTIAL_ID = 'kubeconfig'
     }
 
     stages {
@@ -33,6 +33,28 @@ pipeline {
             }
         }
         
+        stage('Verify Kubectl and Connection') {
+            steps {
+                bat 'kubectl version --client'
+                
+                withCredentials([file(credentialsId: "${KUBECONFIG_CREDENTIAL_ID}", variable: 'KUBECONFIG')]) {
+                    bat '''
+                    @echo off
+                    
+                    REM Set KUBECONFIG environment variable
+                    set KUBECONFIG_FILE=%KUBECONFIG%
+                    
+                    REM Show the kubeconfig content (mask sensitive data)
+                    echo KUBECONFIG file is set to: %KUBECONFIG_FILE%
+                    type %KUBECONFIG_FILE% | findstr /C:"server:" 
+                    
+                    REM Test connection
+                    kubectl --kubeconfig="%KUBECONFIG_FILE%" cluster-info
+                    '''
+                }
+            }
+        }
+        
         stage('Deploy to Kubernetes') {
             steps {
                 withCredentials([file(credentialsId: "${KUBECONFIG_CREDENTIAL_ID}", variable: 'KUBECONFIG')]) {
@@ -42,12 +64,54 @@ pipeline {
                     REM Set KUBECONFIG environment variable
                     set KUBECONFIG_FILE=%KUBECONFIG%
                     
+                    REM Create deployment.yaml if it doesn't exist
+                    echo Creating Kubernetes manifests...
+                    
+                    echo apiVersion: apps/v1 > deployment.yaml
+                    echo kind: Deployment >> deployment.yaml
+                    echo metadata: >> deployment.yaml
+                    echo   name: nodeconsoleapp1 >> deployment.yaml
+                    echo   labels: >> deployment.yaml
+                    echo     app: nodeconsoleapp1 >> deployment.yaml
+                    echo spec: >> deployment.yaml
+                    echo   replicas: 3 >> deployment.yaml
+                    echo   selector: >> deployment.yaml
+                    echo     matchLabels: >> deployment.yaml
+                    echo       app: nodeconsoleapp1 >> deployment.yaml
+                    echo   template: >> deployment.yaml
+                    echo     metadata: >> deployment.yaml
+                    echo       labels: >> deployment.yaml
+                    echo         app: nodeconsoleapp1 >> deployment.yaml
+                    echo     spec: >> deployment.yaml
+                    echo       containers: >> deployment.yaml
+                    echo       - name: nodeconsoleapp1 >> deployment.yaml
+                    echo         image: simran.azurecr.io/nodeconsoleapp1:latest >> deployment.yaml
+                    echo         ports: >> deployment.yaml
+                    echo         - containerPort: 3000 >> deployment.yaml
+                    
+                    echo apiVersion: v1 > service.yaml
+                    echo kind: Service >> service.yaml
+                    echo metadata: >> service.yaml
+                    echo   name: nodeconsoleapp1-service >> service.yaml
+                    echo spec: >> service.yaml
+                    echo   type: LoadBalancer >> service.yaml
+                    echo   ports: >> service.yaml
+                    echo   - port: 80 >> service.yaml
+                    echo     targetPort: 3000 >> service.yaml
+                    echo   selector: >> service.yaml
+                    echo     app: nodeconsoleapp1 >> service.yaml
+                    
+                    REM Show the created files
+                    type deployment.yaml
+                    type service.yaml
+                    
                     REM Deploy to Kubernetes
                     kubectl --kubeconfig="%KUBECONFIG_FILE%" apply -f deployment.yaml
                     kubectl --kubeconfig="%KUBECONFIG_FILE%" apply -f service.yaml
                     
                     REM Verify deployment
-                    kubectl --kubeconfig="%KUBECONFIG_FILE%" rollout status deployment/nodeconsoleapp1
+                    kubectl --kubeconfig="%KUBECONFIG_FILE%" get deployments
+                    kubectl --kubeconfig="%KUBECONFIG_FILE%" get services
                     '''
                 }
             }
