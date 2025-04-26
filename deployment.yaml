@@ -1,21 +1,28 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nodeconsoleapp-deployment
+  name: nodeconsoleapp1
   labels:
-    app: nodeconsoleapp
+    app: nodeconsoleapp1
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: nodeconsoleapp
+      app: nodeconsoleapp1
   template:
     metadata:
       labels:
-        app: nodeconsoleapp
+        app: nodeconsoleapp1
     spec:
       containers:
-      - name: nodeconsoleapp
-        image: demoregistry1001.azurecr.io/nodeconsoleapp1:latest  # <--- Use your actual ACR image path
+      - name: nodeconsoleapp1
+        image: simran.azurecr.io/nodeconsoleapp1:latest
         ports:
         - containerPort: 3000
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: "512Mi"
+          requests:
+            cpu: "0.2"
+            memory: "256Mi"
