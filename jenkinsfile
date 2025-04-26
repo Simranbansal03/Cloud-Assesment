@@ -36,9 +36,18 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 withCredentials([file(credentialsId: "${KUBECONFIG_CREDENTIAL_ID}", variable: 'KUBECONFIG')]) {
-                    sh '''
-                    kubectl apply -f deployment.yaml
-                    kubectl apply -f service.yaml
+                    bat '''
+                    @echo off
+                    
+                    REM Set KUBECONFIG environment variable
+                    set KUBECONFIG_FILE=%KUBECONFIG%
+                    
+                    REM Deploy to Kubernetes
+                    kubectl --kubeconfig="%KUBECONFIG_FILE%" apply -f deployment.yaml
+                    kubectl --kubeconfig="%KUBECONFIG_FILE%" apply -f service.yaml
+                    
+                    REM Verify deployment
+                    kubectl --kubeconfig="%KUBECONFIG_FILE%" rollout status deployment/nodeconsoleapp1
                     '''
                 }
             }
