@@ -5,6 +5,7 @@ pipeline {
         ACR_LOGIN_SERVER = 'simran.azurecr.io'
         IMAGE_NAME = 'nodeconsoleapp1'
         CREDENTIALS_ID = 'jenkins-pipeline-sp'
+        KUBECONFIG_CREDENTIAL_ID = 'kubeconfig' // Make sure to create this credential in Jenkins
     }
 
     stages {
@@ -31,11 +32,22 @@ pipeline {
                 }
             }
         }
+        
+        stage('Deploy to Kubernetes') {
+            steps {
+                withCredentials([file(credentialsId: "${KUBECONFIG_CREDENTIAL_ID}", variable: 'KUBECONFIG')]) {
+                    sh '''
+                    kubectl apply -f deployment.yaml
+                    kubectl apply -f service.yaml
+                    '''
+                }
+            }
+        }
     }
 
     post {
         success {
-            echo '✅ Image pushed to Azure Container Registry!'
+            echo '✅ Image pushed to Azure Container Registry and deployed to Kubernetes!'
         }
         failure {
             echo '❌ Something went wrong during the pipeline!'
