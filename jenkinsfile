@@ -2,16 +2,15 @@ pipeline {
     agent any
 
     environment {
-        ACR_LOGIN_SERVER = 'simran.azurecr.io'         // replace with your ACR login server
-        IMAGE_NAME = 'nodeconsoleapp1'                     // your image name
-        CREDENTIALS_ID = 'jenkins-pipeline-sp'                        // Jenkins ID for ACR credentials
-       
+        ACR_LOGIN_SERVER = 'simran.azurecr.io'
+        IMAGE_NAME = 'nodeconsoleapp1'
+        CREDENTIALS_ID = 'jenkins-pipeline-sp'
     }
 
     stages {
         stage('Clone Repository') {
             steps {
-                git url :'https://github.com/Simranbansal03/Cloud-Assesment' , branch : 'main' // replace with your actual GitHub repo
+                git url: 'https://github.com/Simranbansal03/Cloud-Assesment', branch: 'main'
             }
         }
 
@@ -19,7 +18,6 @@ pipeline {
             steps {
                 script {
                    dockerImage = docker.build("${ACR_LOGIN_SERVER}/${IMAGE_NAME}:latest", "NodeConsoleApp1")
-
                 }
             }
         }
@@ -33,8 +31,6 @@ pipeline {
                 }
             }
         }
-    }
- 
     }
 
     post {
