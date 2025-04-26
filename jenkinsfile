@@ -1,0 +1,46 @@
+pipeline {
+    agent any
+
+    environment {
+        ACR_LOGIN_SERVER = 'simran.azurecr.io'         // replace with your ACR login server
+        IMAGE_NAME = 'nodeconsoleapp1'                     // your image name
+        CREDENTIALS_ID = 'jenkins-pipeline-sp'                        // Jenkins ID for ACR credentials
+        
+    }
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git url :'https://github.com/rani25lodha/AssissmentCapgemini' , branch : 'main' // replace with your actual GitHub repo
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                   dockerImage = docker.build("${ACR_LOGIN_SERVER}/${IMAGE_NAME}:latest", "NodeConsoleApp1")
+
+                }
+            }
+        }
+
+        stage('Push to Azure ACR') {
+            steps {
+                script {
+                    docker.withRegistry("https://${ACR_LOGIN_SERVER}", "${CREDENTIALS_ID}") {
+                        dockerImage.push('latest')
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ Image pushed to Azure Container Registry!'
+        }
+        failure {
+            echo '❌ Something went wrong during the pipeline!'
+        }
+    }
+}
